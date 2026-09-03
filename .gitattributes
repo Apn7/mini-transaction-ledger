@@ -1,0 +1,7 @@
+# Normalize line endings: LF in the repository, native in the working copy.
+# Prevents CRLF from breaking shell scripts inside Linux containers.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jar binary

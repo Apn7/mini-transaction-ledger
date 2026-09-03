@@ -1,0 +1,27 @@
+# Internal working notes - not part of the submission
+_notes/
+
+# Secrets and local environment
+.env
+.env.local
+*.env
+!.env.example
+
+# Java / Maven
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+
+# IDE and OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
