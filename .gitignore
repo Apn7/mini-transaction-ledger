@@ -28,3 +28,8 @@ Thumbs.db
 
 # Local Claude Code config - not part of the submission
 .claude/
+
+# Angular
+out-tsc/
+coverage/
+.history/
