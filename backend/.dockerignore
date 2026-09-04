@@ -1,0 +1,8 @@
+# Everything here is excluded from the build context sent to Docker.
+# Keeps builds fast and stops local build output leaking into the image.
+
+target/
+.git/
+.idea/
+.vscode/
+*.iml
