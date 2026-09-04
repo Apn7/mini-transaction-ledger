@@ -37,5 +37,13 @@ services:
         # Wait for the healthcheck to pass, not just for the container to exist.
         condition: service_healthy
 
+  frontend:
+    build: ./frontend
+    ports:
+      # The whole app is reached here. nginx serves the pages and forwards /api to the backend.
+      - "4200:80"
+    depends_on:
+      - backend
+
 volumes:
   ledger-db-data:

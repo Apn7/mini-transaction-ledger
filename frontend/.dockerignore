@@ -1,0 +1,8 @@
+# Everything here is excluded from the build context sent to Docker.
+# node_modules especially — it is huge, and the image installs its own copy.
+
+node_modules/
+dist/
+.angular/
+.git/
+.vscode/
