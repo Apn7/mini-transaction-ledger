@@ -1,0 +1,41 @@
+# Runs the whole system with one command: docker compose up
+#
+# Defaults below are development credentials on purpose, so a reviewer can start the
+# project without creating any files first. Real deployments override them with a .env file.
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ledger}
+      POSTGRES_USER: ${POSTGRES_USER:-ledger}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ledger}
+    ports:
+      # Host 5433 avoids clashing with a Postgres already installed locally.
+      - "5433:5432"
+    volumes:
+      # Named volume, so the data survives "docker compose down" and container rebuilds.
+      - ledger-db-data:/var/lib/postgresql/data
+    healthcheck:
+      # "Is the container running" is not the same as "is Postgres ready to accept queries".
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ledger} -d ${POSTGRES_DB:-ledger}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      # "db" is the service name above. Compose resolves it to that container's address.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-ledger}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-ledger}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ledger}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        # Wait for the healthcheck to pass, not just for the container to exist.
+        condition: service_healthy
+
+volumes:
+  ledger-db-data:
