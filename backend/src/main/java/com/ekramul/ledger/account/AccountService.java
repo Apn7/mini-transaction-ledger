@@ -19,8 +19,19 @@ public class AccountService {
 		this.accountRepository = accountRepository;
 	}
 
+	/**
+	 * Opens an account with a zero balance.
+	 *
+	 * <p>The duplicate check exists to give a clear error message. It is not the guarantee — two
+	 * simultaneous requests could both pass it before either commits. The unique constraint on
+	 * the table is what actually makes duplicates impossible.
+	 */
 	@Transactional
 	public AccountResponse openAccount(CreateAccountRequest request) {
+		if (accountRepository.existsByAccountNumber(request.accountNumber())) {
+			throw new AccountNumberAlreadyExistsException(request.accountNumber());
+		}
+
 		Account account = new Account(
 				request.accountNumber(),
 				request.ownerName(),
