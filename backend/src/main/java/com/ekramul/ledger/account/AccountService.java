@@ -60,6 +60,21 @@ public class AccountService {
 	}
 
 	/**
+	 * Locks the account, takes money out of it, and returns it.
+	 *
+	 * <p>The lock is what makes the balance check trustworthy. Without it, two withdrawals could
+	 * both read the same balance, both decide there is enough, and both succeed.
+	 */
+	@Transactional
+	public Account debitAccount(Long accountId, BigDecimal amount) {
+		Account account = accountRepository.findByIdForUpdate(accountId)
+				.orElseThrow(() -> new AccountNotFoundException(accountId));
+
+		account.debit(amount);
+		return account;
+	}
+
+	/**
 	 * {@code readOnly} lets Hibernate skip dirty-checking and lets the database optimise the
 	 * transaction. It also documents that nothing here writes.
 	 */

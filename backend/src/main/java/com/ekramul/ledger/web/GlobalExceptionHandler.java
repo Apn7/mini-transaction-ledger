@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ekramul.ledger.account.AccountNotFoundException;
 import com.ekramul.ledger.account.AccountNumberAlreadyExistsException;
+import com.ekramul.ledger.account.InsufficientBalanceException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -65,6 +66,21 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiError.of(
 				HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI()));
+	}
+
+	/**
+	 * The request was valid and the account exists, but the money is not there.
+	 *
+	 * <p>422 rather than 400: nothing about the request was malformed. 409 would also be
+	 * defensible, since it conflicts with current state.
+	 */
+	@ExceptionHandler(InsufficientBalanceException.class)
+	public ResponseEntity<ApiError> handleInsufficientBalance(InsufficientBalanceException ex,
+			HttpServletRequest request) {
+
+		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiError.of(
+				HttpStatus.UNPROCESSABLE_ENTITY.value(), "Insufficient balance",
+				ex.getMessage(), request.getRequestURI()));
 	}
 
 	/**

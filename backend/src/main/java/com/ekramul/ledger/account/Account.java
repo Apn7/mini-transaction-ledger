@@ -71,6 +71,25 @@ public class Account {
 		this.balance = this.balance.add(amount);
 	}
 
+	/**
+	 * Takes money out of this account.
+	 *
+	 * <p>Refuses to go below zero. The rule lives here, next to the balance it protects, so no
+	 * caller can forget it.
+	 *
+	 * <p>Uses {@code compareTo} rather than {@code equals}: two BigDecimals with the same value
+	 * but different scale — 10.5 and 10.5000 — are not {@code equals}, but do compare as equal.
+	 */
+	public void debit(BigDecimal amount) {
+		requirePositive(amount);
+
+		if (this.balance.compareTo(amount) < 0) {
+			throw new InsufficientBalanceException(this.accountNumber, this.balance, amount);
+		}
+
+		this.balance = this.balance.subtract(amount);
+	}
+
 	private static void requirePositive(BigDecimal amount) {
 		if (amount == null || amount.signum() <= 0) {
 			throw new IllegalArgumentException("Amount must be greater than zero");
