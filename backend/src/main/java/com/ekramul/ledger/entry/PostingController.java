@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ekramul.ledger.entry.dto.DepositRequest;
 import com.ekramul.ledger.entry.dto.EntryResponse;
+import com.ekramul.ledger.entry.dto.WithdrawalRequest;
 
 import jakarta.validation.Valid;
 
@@ -31,6 +32,12 @@ public class PostingController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public EntryResponse deposit(@PathVariable Long accountId, @Valid @RequestBody DepositRequest request) {
 		return postingService.deposit(accountId, request);
+	}
+
+	@PostMapping("/withdrawals")
+	@ResponseStatus(HttpStatus.CREATED)
+	public EntryResponse withdraw(@PathVariable Long accountId, @Valid @RequestBody WithdrawalRequest request) {
+		return postingService.withdraw(accountId, request);
 	}
 
 	/** The account's statement: every entry, oldest first. */

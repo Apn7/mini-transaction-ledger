@@ -9,6 +9,7 @@ import com.ekramul.ledger.account.Account;
 import com.ekramul.ledger.account.AccountService;
 import com.ekramul.ledger.entry.dto.DepositRequest;
 import com.ekramul.ledger.entry.dto.EntryResponse;
+import com.ekramul.ledger.entry.dto.WithdrawalRequest;
 
 /** Records money movements. Every method here is one all-or-nothing unit of work. */
 @Service
@@ -44,6 +45,26 @@ public class PostingService {
 
 		LedgerEntry entry = entryRepository.save(new LedgerEntry(
 				transaction, account, Direction.CREDIT, request.amount(), account.getBalance()));
+
+		return EntryResponse.from(entry);
+	}
+
+	/**
+	 * Takes money out of an account.
+	 *
+	 * <p>Mirror of {@link #deposit}, with one extra rule: the account must have the money. If it
+	 * does not, {@code debitAccount} throws, this method does not catch it, and the transaction
+	 * rolls back — so the event row written a moment ago is discarded too.
+	 */
+	@Transactional
+	public EntryResponse withdraw(Long accountId, WithdrawalRequest request) {
+		LedgerTransaction transaction = transactionRepository.save(new LedgerTransaction(
+				request.reference(), TransactionType.WITHDRAWAL, request.description()));
+
+		Account account = accountService.debitAccount(accountId, request.amount());
+
+		LedgerEntry entry = entryRepository.save(new LedgerEntry(
+				transaction, account, Direction.DEBIT, request.amount(), account.getBalance()));
 
 		return EntryResponse.from(entry);
 	}
