@@ -3,6 +3,11 @@ package com.ekramul.ledger.account;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 /**
  * Database access for {@link Account}.
@@ -19,4 +24,15 @@ interface AccountRepository extends JpaRepository<Account, Long> {
 	Optional<Account> findByAccountNumber(String accountNumber);
 
 	boolean existsByAccountNumber(String accountNumber);
+
+	/**
+	 * Loads an account and holds a write lock on its row until the transaction ends.
+	 *
+	 * <p>Issues {@code SELECT ... FOR UPDATE}. A second transaction asking for the same account
+	 * waits here instead of reading a balance that is about to change. Without this, two
+	 * simultaneous withdrawals could both see the old balance and both succeed.
+	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select a from Account a where a.id = :id")
+	Optional<Account> findByIdForUpdate(@Param("id") Long id);
 }

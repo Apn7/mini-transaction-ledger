@@ -1,5 +1,6 @@
 package com.ekramul.ledger.account;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.domain.Sort;
@@ -38,6 +39,24 @@ public class AccountService {
 				request.currency());
 
 		return AccountResponse.from(accountRepository.save(account));
+	}
+
+	/**
+	 * Locks the account, adds money to it, and returns it.
+	 *
+	 * <p>Other features do not reach into account data themselves — they ask this service. The
+	 * repository is package-private, so that is enforced by the compiler.
+	 *
+	 * <p>The lock is held until the caller's transaction commits, not until this method returns.
+	 * A caller can therefore lock an account, write a ledger entry, and have both land together.
+	 */
+	@Transactional
+	public Account creditAccount(Long accountId, BigDecimal amount) {
+		Account account = accountRepository.findByIdForUpdate(accountId)
+				.orElseThrow(() -> new AccountNotFoundException(accountId));
+
+		account.credit(amount);
+		return account;
 	}
 
 	/**

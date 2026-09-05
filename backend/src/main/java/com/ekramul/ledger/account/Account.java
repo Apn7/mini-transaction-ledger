@@ -60,6 +60,23 @@ public class Account {
 		this.balance = BigDecimal.ZERO;
 	}
 
+	/**
+	 * Adds money to this account.
+	 *
+	 * <p>The balance is only ever changed through methods like this one, so the rules live with
+	 * the data rather than being repeated by every caller.
+	 */
+	public void credit(BigDecimal amount) {
+		requirePositive(amount);
+		this.balance = this.balance.add(amount);
+	}
+
+	private static void requirePositive(BigDecimal amount) {
+		if (amount == null || amount.signum() <= 0) {
+			throw new IllegalArgumentException("Amount must be greater than zero");
+		}
+	}
+
 	public Long getId() {
 		return id;
 	}

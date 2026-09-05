@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.ekramul.ledger.account.AccountNotFoundException;
 import com.ekramul.ledger.account.AccountNumberAlreadyExistsException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,6 +47,15 @@ public class GlobalExceptionHandler {
 				violations);
 
 		return ResponseEntity.badRequest().body(body);
+	}
+
+	/** The request named something that does not exist. */
+	@ExceptionHandler(AccountNotFoundException.class)
+	public ResponseEntity<ApiError> handleAccountNotFound(AccountNotFoundException ex,
+			HttpServletRequest request) {
+
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiError.of(
+				HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(), request.getRequestURI()));
 	}
 
 	/** A business rule said no. 409 means "the request was understood but conflicts with state". */
