@@ -26,9 +26,13 @@ interface AccountRepository extends JpaRepository<Account, Long> {
 	/**
 	 * Loads an account and holds a write lock on its row until the transaction ends.
 	 *
-	 * <p>Issues {@code SELECT ... FOR UPDATE}. A second transaction asking for the same account
-	 * waits here instead of reading a balance that is about to change. Without this, two
-	 * simultaneous withdrawals could both see the old balance and both succeed.
+	 * <p>On PostgreSQL, Hibernate renders this as {@code SELECT ... FOR NO KEY UPDATE}. That still
+	 * blocks any other transaction trying to write the same row; it only stays out of the way of
+	 * foreign-key checks pointing at it, which is why it is the default for a write lock.
+	 *
+	 * <p>A second transaction asking for the same account waits here instead of reading a balance
+	 * that is about to change. Without this, two simultaneous withdrawals could both see the old
+	 * balance and both succeed.
 	 */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select a from Account a where a.id = :id")
