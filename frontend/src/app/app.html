@@ -1,4 +1,35 @@
 <main>
   <h1>Mini Transaction Ledger</h1>
-  <p>Backend status: {{ backendStatus() }}</p>
+  <p class="status">Backend: {{ backendStatus() }}</p>
+
+  <h2>Accounts</h2>
+
+  @if (loading()) {
+    <p class="muted">Loading accounts...</p>
+  } @else if (loadFailed()) {
+    <p class="error">Could not load accounts. Is the backend running?</p>
+  } @else if (accounts().length === 0) {
+    <p class="muted">No accounts yet.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Account number</th>
+          <th>Owner</th>
+          <th class="num">Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (account of accounts(); track account.id) {
+          <tr>
+            <td>{{ account.id }}</td>
+            <td>{{ account.accountNumber }}</td>
+            <td>{{ account.ownerName }}</td>
+            <td class="num">{{ account.balance | number: '1.2-2' }} {{ account.currency }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
 </main>

@@ -1,1 +1,55 @@
-/* You can add global styles to this file, and also import other style files */
+/* Deliberately small. Plain CSS, no framework — the assignment is graded on the backend
+   and on being able to explain every line. */
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: #fff;
+  color: #111;
+  margin: 0;
+  padding: 2rem;
+  max-width: 60rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin-top: 2rem;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+  font-weight: 600;
+  color: #555;
+}
+
+/* Right-aligned, and tabular-nums keeps the digits in a fixed-width column so amounts
+   line up under each other. */
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.status,
+.muted {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.error {
+  color: #b00020;
+}
