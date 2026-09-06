@@ -40,6 +40,15 @@ export class App implements OnInit {
   protected readonly notice = signal<string | null>(null);
   protected readonly noticeIsError = signal(false);
 
+  /**
+   * True while a posting is in flight, which disables every button that starts one.
+   *
+   * <p>Without this, a double-clicked button sends two requests — and the idempotency key does
+   * not save you, because each call mints a fresh reference. The key protects against a *retry*
+   * of one request; it says nothing about two requests the user never meant to make.
+   */
+  protected readonly busy = signal(false);
+
   ngOnInit(): void {
     this.healthService.getHealth().subscribe({
       next: (response) => this.backendStatus.set(response.status),
@@ -54,6 +63,7 @@ export class App implements OnInit {
   protected openAccount(number: HTMLInputElement, owner: HTMLInputElement, currency: HTMLSelectElement): void {
     // The currency comes from a fixed list, so it needs no cleaning — unlike the two free-text
     // fields, which are trimmed before they are sent.
+    this.busy.set(true);
     this.accountService.openAccount(number.value.trim(), owner.value.trim(), currency.value)
       .subscribe({
         next: (account) => {
@@ -83,6 +93,7 @@ export class App implements OnInit {
       return;
     }
 
+    this.busy.set(true);
     this.postingService.deposit(account.id, amount.value, description.value).subscribe({
       next: () => this.afterPosting(`Deposited ${amount.value}`, amount, description),
       error: (error) => this.fail(error),
@@ -95,6 +106,7 @@ export class App implements OnInit {
       return;
     }
 
+    this.busy.set(true);
     this.postingService.withdraw(account.id, amount.value, description.value).subscribe({
       next: () => this.afterPosting(`Withdrew ${amount.value}`, amount, description),
       error: (error) => this.fail(error),
@@ -107,6 +119,7 @@ export class App implements OnInit {
       return;
     }
 
+    this.busy.set(true);
     this.postingService.transfer(account.id, Number(to.value), amount.value, description.value).subscribe({
       next: () => this.afterPosting(`Transferred ${amount.value}`, amount, description),
       error: (error) => this.fail(error),
@@ -151,6 +164,7 @@ export class App implements OnInit {
   private succeed(message: string): void {
     this.notice.set(message);
     this.noticeIsError.set(false);
+    this.busy.set(false);
   }
 
   /**
@@ -172,6 +186,7 @@ export class App implements OnInit {
 
     this.notice.set(message);
     this.noticeIsError.set(true);
+    this.busy.set(false);
   }
 
   /** Accounts other than the open one — the possible destinations for a transfer. */

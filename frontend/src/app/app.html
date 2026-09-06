@@ -16,12 +16,28 @@
 <div class="columns">
   <!-- ---------------------------------------------------------------- accounts -->
   <section>
+    <div class="form-block first">
+      <h2>Open an account</h2>
+      <div class="fields">
+        <input #accountNumber placeholder="Account number" maxlength="20" aria-label="Account number" />
+        <input #ownerName placeholder="Owner name" maxlength="120" aria-label="Owner name" />
+        <select #currency class="short" aria-label="Currency">
+          <option value="BDT">BDT</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+          <option value="INR">INR</option>
+        </select>
+      </div>
+      <button class="action" [disabled]="busy()" (click)="openAccount(accountNumber, ownerName, currency)">Open account</button>
+    </div>
+
     <h2>Accounts</h2>
 
     @if (loading()) {
       <p class="muted">Reading accounts.</p>
     } @else if (accounts().length === 0) {
-      <p class="muted">No accounts yet. Open the first one below.</p>
+      <p class="muted">No accounts yet. Open the first one above.</p>
     } @else {
       <table class="ledger">
         <thead>
@@ -50,22 +66,6 @@
         </tbody>
       </table>
     }
-
-    <div class="form-block">
-      <h2>Open an account</h2>
-      <div class="fields">
-        <input #accountNumber placeholder="Account number" maxlength="20" aria-label="Account number" />
-        <input #ownerName placeholder="Owner name" maxlength="120" aria-label="Owner name" />
-        <select #currency class="short" aria-label="Currency">
-          <option value="BDT">BDT</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-          <option value="GBP">GBP</option>
-          <option value="INR">INR</option>
-        </select>
-      </div>
-      <button class="action" (click)="openAccount(accountNumber, ownerName, currency)">Open account</button>
-    </div>
   </section>
 
   <!-- ----------------------------------------------------------------- posting -->
@@ -84,8 +84,8 @@
           <input #description placeholder="What is it for?" maxlength="255" aria-label="Description" />
         </div>
         <div class="actions">
-          <button class="action" (click)="deposit(amount, description)">Deposit</button>
-          <button class="action secondary" (click)="withdraw(amount, description)">Withdraw</button>
+          <button class="action" [disabled]="busy()" (click)="deposit(amount, description)">Deposit</button>
+          <button class="action secondary" [disabled]="busy()" (click)="withdraw(amount, description)">Withdraw</button>
         </div>
       </div>
 
@@ -101,7 +101,7 @@
             <input #transferAmount type="number" min="0.01" step="0.01" placeholder="Amount" aria-label="Transfer amount" />
             <input #transferNote placeholder="What is it for?" maxlength="255" aria-label="Transfer description" />
           </div>
-          <button class="action" (click)="transfer(target, transferAmount, transferNote)">Send transfer</button>
+          <button class="action" [disabled]="busy()" (click)="transfer(target, transferAmount, transferNote)">Send transfer</button>
         </div>
       }
 
@@ -110,36 +110,38 @@
         @if (entries().length === 0) {
           <p class="muted">Nothing posted to this account yet.</p>
         } @else {
-          <table class="ledger statement">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Particulars</th>
-                <th class="num">Debit</th>
-                <th class="num">Credit</th>
-                <th class="num">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (entry of entries(); track entry.entryId) {
+          <div class="scroller">
+            <table class="ledger statement">
+              <thead>
                 <tr>
-                  <td class="when">{{ entry.createdAt | date: 'd MMM, HH:mm' }}</td>
-                  <td>{{ entry.description || 'No description' }}</td>
-                  <td class="num figure debit">
-                    @if (entry.direction === 'DEBIT') {
-                      {{ entry.amount | number: '1.2-2' }}
-                    }
-                  </td>
-                  <td class="num figure">
-                    @if (entry.direction === 'CREDIT') {
-                      {{ entry.amount | number: '1.2-2' }}
-                    }
-                  </td>
-                  <td class="num figure carried">{{ entry.balanceAfter | number: '1.2-2' }}</td>
+                  <th>Date</th>
+                  <th>Particulars</th>
+                  <th class="num">Debit</th>
+                  <th class="num">Credit</th>
+                  <th class="num">Balance</th>
                 </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @for (entry of entries(); track entry.entryId) {
+                  <tr [title]="'Idempotency key: ' + entry.reference">
+                    <td class="when">{{ entry.createdAt | date: 'd MMM, HH:mm' }}</td>
+                    <td>{{ entry.description || 'No description' }}</td>
+                    <td class="num figure debit">
+                      @if (entry.direction === 'DEBIT') {
+                        {{ entry.amount | number: '1.2-2' }}
+                      }
+                    </td>
+                    <td class="num figure">
+                      @if (entry.direction === 'CREDIT') {
+                        {{ entry.amount | number: '1.2-2' }}
+                      }
+                    </td>
+                    <td class="num figure carried">{{ entry.balanceAfter | number: '1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
           <p class="hint">Every balance is written by the server as the entry is posted, never added up here.</p>
         }
       </div>

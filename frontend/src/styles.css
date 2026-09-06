@@ -102,6 +102,11 @@ h2 {
   margin-top: 2.25rem;
 }
 
+.form-block.first {
+  margin-top: 0;
+  padding-bottom: 2rem;
+}
+
 /* --- the ledger sheet ---------------------------------------------------- */
 
 .ledger {
@@ -275,8 +280,15 @@ select:focus-visible,
   cursor: pointer;
 }
 
-.action:hover {
+.action:hover:not(:disabled) {
   background: #24402f;
+}
+
+/* Held down while a posting is in flight, so a second click cannot become a
+   second deposit. */
+.action:disabled {
+  opacity: 0.45;
+  cursor: progress;
 }
 
 .action.secondary {
@@ -284,8 +296,14 @@ select:focus-visible,
   background: transparent;
 }
 
-.action.secondary:hover {
+.action.secondary:hover:not(:disabled) {
   background: var(--band);
+}
+
+/* Five columns have a hard minimum width, so on a narrow screen the statement
+   scrolls inside its own box rather than pushing the whole page sideways. */
+.scroller {
+  overflow-x: auto;
 }
 
 /* --- messages ------------------------------------------------------------ */
