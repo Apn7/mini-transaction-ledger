@@ -115,14 +115,21 @@ h2 {
   font-size: 0.9375rem;
 }
 
+/* The header stays put while the rows scroll under it. The rule is drawn with
+   an inset shadow rather than a border, because a border on a sticky cell is
+   dropped once the table uses border-collapse. */
 .ledger th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   font-family: var(--sans);
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   text-align: left;
   padding: 0.4rem 0.7rem;
-  border-bottom: 1px solid var(--ink);
+  background: var(--paper);
+  box-shadow: inset 0 -1px 0 var(--ink);
 }
 
 .ledger td {
@@ -300,10 +307,13 @@ select:focus-visible,
   background: var(--band);
 }
 
-/* Five columns have a hard minimum width, so on a narrow screen the statement
-   scrolls inside its own box rather than pushing the whole page sideways. */
+/* Both tables grow without limit — an account list and a statement have no
+   natural end. Each scrolls inside its own box instead of stretching the page:
+   vertically past about ten rows, and horizontally on a narrow screen, where
+   the statement's five columns have a hard minimum width. */
 .scroller {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 26rem;
 }
 
 /* --- messages ------------------------------------------------------------ */

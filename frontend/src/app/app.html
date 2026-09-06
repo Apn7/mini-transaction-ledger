@@ -39,32 +39,34 @@
     } @else if (accounts().length === 0) {
       <p class="muted">No accounts yet. Open the first one above.</p>
     } @else {
-      <table class="ledger">
-        <thead>
-          <tr>
-            <th>Account</th>
-            <th>Owner</th>
-            <th class="num">Balance</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (account of accounts(); track account.id) {
-            <tr
-              [class.row-open]="account.id === selected()?.id"
-              (click)="select(account)"
-              (keydown.enter)="select(account)"
-              tabindex="0"
-            >
-              <td>{{ account.accountNumber }}</td>
-              <td>{{ account.ownerName }}</td>
-              <td class="num figure">
-                {{ account.balance | number: '1.2-2' }}
-                <span class="ccy">{{ account.currency }}</span>
-              </td>
+      <div class="scroller">
+        <table class="ledger">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Owner</th>
+              <th class="num">Balance</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (account of accounts(); track account.id) {
+              <tr
+                [class.row-open]="account.id === selected()?.id"
+                (click)="select(account)"
+                (keydown.enter)="select(account)"
+                tabindex="0"
+              >
+                <td>{{ account.accountNumber }}</td>
+                <td>{{ account.ownerName }}</td>
+                <td class="num figure">
+                  {{ account.balance | number: '1.2-2' }}
+                  <span class="ccy">{{ account.currency }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
   </section>
 
