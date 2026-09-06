@@ -56,7 +56,13 @@
       <div class="fields">
         <input #accountNumber placeholder="Account number" maxlength="20" aria-label="Account number" />
         <input #ownerName placeholder="Owner name" maxlength="120" aria-label="Owner name" />
-        <input #currency value="BDT" maxlength="3" class="short" aria-label="Currency" />
+        <select #currency class="short" aria-label="Currency">
+          <option value="BDT">BDT</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+          <option value="INR">INR</option>
+        </select>
       </div>
       <button class="action" (click)="openAccount(accountNumber, ownerName, currency)">Open account</button>
     </div>

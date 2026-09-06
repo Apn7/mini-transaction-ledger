@@ -247,8 +247,8 @@ select {
   border-radius: 3px;
 }
 
-input.short {
-  flex: 0 0 4.5rem;
+.short {
+  flex: 0 0 5.5rem;
 }
 
 input:focus-visible,

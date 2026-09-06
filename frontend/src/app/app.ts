@@ -51,8 +51,10 @@ export class App implements OnInit {
 
   // --- accounts -------------------------------------------------------------------------
 
-  protected openAccount(number: HTMLInputElement, owner: HTMLInputElement, currency: HTMLInputElement): void {
-    this.accountService.openAccount(number.value.trim(), owner.value.trim(), currency.value.trim().toUpperCase())
+  protected openAccount(number: HTMLInputElement, owner: HTMLInputElement, currency: HTMLSelectElement): void {
+    // The currency comes from a fixed list, so it needs no cleaning — unlike the two free-text
+    // fields, which are trimmed before they are sent.
+    this.accountService.openAccount(number.value.trim(), owner.value.trim(), currency.value)
       .subscribe({
         next: (account) => {
           this.succeed(`Opened account ${account.accountNumber}`);
