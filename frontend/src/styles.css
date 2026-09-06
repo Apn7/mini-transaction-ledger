@@ -35,11 +35,19 @@ body {
   color: var(--ink);
   background: var(--paper);
   margin: 0;
-  padding: 2.5rem 5vw 5rem;
+  padding: 2.5rem 5vw;
+  height: 100vh;
 }
 
+/* The shell is exactly one viewport tall: the masthead and the message bar are
+   fixed, and each column scrolls on its own. The page itself never scrolls, so
+   the balance you are posting against stays on screen while you read down a
+   statement. `min-height: 0` on the flex and grid children is what allows them
+   to shrink below their content and scroll — without it they just grow. */
 app-root {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   max-width: 74rem;
   margin: 0 auto;
 }
@@ -88,13 +96,42 @@ h2 {
   display: grid;
   grid-template-columns: minmax(20rem, 2fr) minmax(24rem, 3fr);
   gap: 3rem;
-  align-items: start;
+  flex: 1;
+  min-height: 0;
 }
 
-@media (max-width: 62rem) {
+.columns > section {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.75rem;
+  padding-bottom: 2rem;
+}
+
+/* Below the breakpoint there is not enough height to divide, so the shell is
+   released and the page scrolls as an ordinary document. */
+@media (max-width: 62rem), (max-height: 40rem) {
+  body {
+    height: auto;
+    padding-bottom: 4rem;
+  }
+
+  app-root {
+    height: auto;
+  }
+
   .columns {
     grid-template-columns: 1fr;
     gap: 2.5rem;
+  }
+
+  .columns > section {
+    overflow-y: visible;
+    padding-right: 0;
+    padding-bottom: 0;
+  }
+
+  .scroller {
+    overflow-x: auto;
   }
 }
 
@@ -307,13 +344,17 @@ select:focus-visible,
   background: var(--band);
 }
 
-/* Both tables grow without limit — an account list and a statement have no
-   natural end. Each scrolls inside its own box instead of stretching the page:
-   vertically past about ten rows, and horizontally on a narrow screen, where
-   the statement's five columns have a hard minimum width. */
+/* Left transparent on a wide screen, on purpose. Any `overflow` other than
+   `visible` makes an element a scroll container, and a sticky `th` sticks to
+   its nearest one — so a wrapper here would pin the header to a box that never
+   moves, and the header would scroll away with the column. The column is the
+   scroll region; the table just sits in it.
+
+   The narrow rules below turn it on for horizontal scrolling, where the
+   statement's five columns have a hard minimum width. There the page scrolls as
+   a document anyway, so nothing is competing for the sticky behaviour. */
 .scroller {
-  overflow: auto;
-  max-height: 26rem;
+  overflow: visible;
 }
 
 /* --- messages ------------------------------------------------------------ */
