@@ -52,8 +52,7 @@ public class AccountService {
 	 */
 	@Transactional
 	public Account creditAccount(Long accountId, BigDecimal amount) {
-		Account account = accountRepository.findByIdForUpdate(accountId)
-				.orElseThrow(() -> new AccountNotFoundException(accountId));
+		Account account = lockForUpdate(accountId);
 
 		account.credit(amount);
 		return account;
@@ -67,8 +66,7 @@ public class AccountService {
 	 */
 	@Transactional
 	public Account debitAccount(Long accountId, BigDecimal amount) {
-		Account account = accountRepository.findByIdForUpdate(accountId)
-				.orElseThrow(() -> new AccountNotFoundException(accountId));
+		Account account = lockForUpdate(accountId);
 
 		account.debit(amount);
 		return account;
@@ -91,15 +89,17 @@ public class AccountService {
 			throw new InvalidTransferException("Cannot transfer to the same account");
 		}
 
-		Long lowerId = Math.min(fromAccountId, toAccountId);
-		Long higherId = Math.max(fromAccountId, toAccountId);
+		Account from;
+		Account to;
 
-		Account lower = lockForUpdate(lowerId);
-		Account higher = lockForUpdate(higherId);
-
-		boolean sourceIsLower = fromAccountId.equals(lowerId);
-		Account from = sourceIsLower ? lower : higher;
-		Account to = sourceIsLower ? higher : lower;
+		// The lower id is always locked first, whichever way the money is going.
+		if (fromAccountId < toAccountId) {
+			from = lockForUpdate(fromAccountId);
+			to = lockForUpdate(toAccountId);
+		} else {
+			to = lockForUpdate(toAccountId);
+			from = lockForUpdate(fromAccountId);
+		}
 
 		if (!from.getCurrency().equals(to.getCurrency())) {
 			throw new InvalidTransferException("Cannot transfer between accounts in different currencies: "
