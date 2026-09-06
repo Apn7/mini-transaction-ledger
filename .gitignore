@@ -33,3 +33,13 @@ Thumbs.db
 out-tsc/
 coverage/
 .history/
+
+# LaTeX build artifacts. The source and the built PDF are both committed -
+# the graders should not have to install a TeX distribution to read it.
+docs/*.aux
+docs/*.log
+docs/*.out
+docs/*.toc
+docs/*.fls
+docs/*.fdb_latexmk
+docs/*.synctex.gz
