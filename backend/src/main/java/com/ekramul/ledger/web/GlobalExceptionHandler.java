@@ -25,6 +25,11 @@ import jakarta.servlet.http.HttpServletRequest;
  * <p>This is why service code never wraps its work in try-catch. Swallowing an exception inside
  * a {@code @Transactional} method would let the transaction commit a half-finished operation.
  * Errors are allowed to escape, and are translated here at the boundary.
+ *
+ * <p>Only application exceptions are handled here. There is deliberately no
+ * {@code @ExceptionHandler(Exception.class)}: a catch-all runs before Spring's own resolvers and
+ * would turn framework exceptions — malformed JSON, unknown path, wrong HTTP method — into 500s
+ * instead of the 400, 404 and 405 they should be.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -110,16 +115,5 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiError.of(
 				HttpStatus.CONFLICT.value(), "Conflict",
 				"The request conflicts with existing data", request.getRequestURI()));
-	}
-
-	/** Anything unforeseen. Log the detail, tell the client nothing that could help an attacker. */
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
-
-		log.error("Unhandled exception on {}", request.getRequestURI(), ex);
-
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiError.of(
-				HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error",
-				"Something went wrong", request.getRequestURI()));
 	}
 }

@@ -4,7 +4,6 @@ import { HealthService } from './health.service';
 @Component({
   imports: [],
   selector: 'app-root',
-  styleUrl: './app.css',
   templateUrl: './app.html',
 })
 export class App implements OnInit {
