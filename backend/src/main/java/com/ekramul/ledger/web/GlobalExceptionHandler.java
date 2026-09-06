@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.ekramul.ledger.account.AccountNotFoundException;
 import com.ekramul.ledger.account.AccountNumberAlreadyExistsException;
 import com.ekramul.ledger.account.InsufficientBalanceException;
+import com.ekramul.ledger.account.InvalidTransferException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -66,6 +67,16 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiError.of(
 				HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI()));
+	}
+
+	/** A transfer that cannot be carried out — same account on both sides, or mixed currencies. */
+	@ExceptionHandler(InvalidTransferException.class)
+	public ResponseEntity<ApiError> handleInvalidTransfer(InvalidTransferException ex,
+			HttpServletRequest request) {
+
+		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiError.of(
+				HttpStatus.UNPROCESSABLE_ENTITY.value(), "Transfer not allowed",
+				ex.getMessage(), request.getRequestURI()));
 	}
 
 	/**

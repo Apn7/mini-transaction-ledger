@@ -75,6 +75,49 @@ public class AccountService {
 	}
 
 	/**
+	 * Moves money from one account to another.
+	 *
+	 * <p><strong>Both accounts are locked, always in ascending id order.</strong> That ordering is
+	 * what prevents deadlock. If transfer A&rarr;B locked A then B, while transfer B&rarr;A locked
+	 * B then A, each would hold what the other needs and neither would ever finish. Locking the
+	 * lower id first means both transfers queue for the same row, so one waits and the other runs.
+	 *
+	 * <p>The debit and the credit happen in one transaction. Either both land or neither does —
+	 * money is never in flight between two accounts.
+	 */
+	@Transactional
+	public AccountPair moveMoney(Long fromAccountId, Long toAccountId, BigDecimal amount) {
+		if (fromAccountId.equals(toAccountId)) {
+			throw new InvalidTransferException("Cannot transfer to the same account");
+		}
+
+		Long lowerId = Math.min(fromAccountId, toAccountId);
+		Long higherId = Math.max(fromAccountId, toAccountId);
+
+		Account lower = lockForUpdate(lowerId);
+		Account higher = lockForUpdate(higherId);
+
+		boolean sourceIsLower = fromAccountId.equals(lowerId);
+		Account from = sourceIsLower ? lower : higher;
+		Account to = sourceIsLower ? higher : lower;
+
+		if (!from.getCurrency().equals(to.getCurrency())) {
+			throw new InvalidTransferException("Cannot transfer between accounts in different currencies: "
+					+ from.getCurrency() + " to " + to.getCurrency());
+		}
+
+		from.debit(amount);
+		to.credit(amount);
+
+		return new AccountPair(from, to);
+	}
+
+	private Account lockForUpdate(Long accountId) {
+		return accountRepository.findByIdForUpdate(accountId)
+				.orElseThrow(() -> new AccountNotFoundException(accountId));
+	}
+
+	/**
 	 * {@code readOnly} lets Hibernate skip dirty-checking and lets the database optimise the
 	 * transaction. It also documents that nothing here writes.
 	 */
