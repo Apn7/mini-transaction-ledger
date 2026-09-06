@@ -1,55 +1,321 @@
-/* Deliberately small. Plain CSS, no framework — the assignment is graded on the backend
-   and on being able to explain every line. */
+/* ---------------------------------------------------------------------------
+   Greenbar.
+
+   The reference is continuous-feed accounting paper: white stock with pale
+   green bands, thin column rules, figures in a serif, and money leaving the
+   account written in red. The statement is the hero — everything else is
+   chrome and stays quiet.
+
+   Georgia carries every number and heading; the system sans handles controls
+   and column headers. Both are installed everywhere, so no web font is
+   fetched at runtime. A banking app should not call out to a third party on
+   page load.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --paper: #ffffff;
+  --band: #eef3ec;
+  --ink: #182b22;
+  --rule: #c6d5cb;
+  --debit: #a3231e;
+  --muted: #5c6b62;
+
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
 
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background: #fff;
-  color: #111;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--paper);
   margin: 0;
-  padding: 2rem;
-  max-width: 60rem;
+  padding: 2.5rem 5vw 5rem;
+}
+
+app-root {
+  display: block;
+  max-width: 74rem;
+  margin: 0 auto;
+}
+
+/* --- masthead ------------------------------------------------------------ */
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 0.9rem;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 2.25rem;
 }
 
 h1 {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
+  font-family: var(--serif);
+  font-size: clamp(1.65rem, 3vw, 2.25rem);
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0;
 }
 
 h2 {
-  font-size: 1.1rem;
-  margin-top: 2rem;
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  margin: 0 0 0.9rem;
 }
 
-table {
-  border-collapse: collapse;
+.api-state {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.api-down {
+  color: var(--debit);
+}
+
+/* --- layout -------------------------------------------------------------- */
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(20rem, 2fr) minmax(24rem, 3fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (max-width: 62rem) {
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+.form-block {
+  margin-top: 2.25rem;
+}
+
+/* --- the ledger sheet ---------------------------------------------------- */
+
+.ledger {
   width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
 }
 
-th,
-td {
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-th {
+.ledger th {
+  font-family: var(--sans);
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #555;
+  color: var(--muted);
+  text-align: left;
+  padding: 0.4rem 0.7rem;
+  border-bottom: 1px solid var(--ink);
 }
 
-/* Right-aligned, and tabular-nums keeps the digits in a fixed-width column so amounts
-   line up under each other. */
+.ledger td {
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Greenbar: alternating bands, which is also how you keep your place reading
+   across a wide row. */
+.ledger tbody tr:nth-child(even) {
+  background: var(--band);
+}
+
+/* Thin rules between the money columns, the way a ledger book is ruled. */
+.statement td:nth-child(3),
+.statement td:nth-child(4),
+.statement th:nth-child(3),
+.statement th:nth-child(4) {
+  border-left: 1px solid var(--rule);
+}
+
+.statement td:last-child,
+.statement th:last-child {
+  border-left: 2px solid var(--rule);
+}
+
 .num {
   text-align: right;
+}
+
+/* Figures stay in the sans. Georgia's numerals are old-style — they sit at
+   different heights, which is charming in a book and wrong on a balance.
+   Tabular so the decimal points stack down the column. */
+.figure {
   font-variant-numeric: tabular-nums;
 }
 
-.status,
-.muted {
-  color: #666;
-  font-size: 0.875rem;
+.debit {
+  color: var(--debit);
 }
 
-.error {
-  color: #b00020;
+.carried {
+  font-weight: 700;
+}
+
+.when {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.ccy {
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  margin-left: 0.3rem;
+}
+
+/* --- selecting an account ------------------------------------------------ */
+
+.ledger tbody tr {
+  cursor: pointer;
+}
+
+.ledger tbody tr:hover {
+  background: var(--band);
+}
+
+.row-open,
+.row-open:hover {
+  background: var(--band);
+  box-shadow: inset 3px 0 0 var(--ink);
+}
+
+.ledger tbody tr:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+/* --- the open account ---------------------------------------------------- */
+
+.account-owner {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.account-number {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 0.1rem 0 0.6rem;
+}
+
+.balance {
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 0 0 0.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.balance .ccy {
+  font-size: 0.9375rem;
+  margin-left: 0.5rem;
+}
+
+/* --- controls ------------------------------------------------------------ */
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+input,
+select {
+  flex: 1 1 9rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+}
+
+input.short {
+  flex: 0 0 4.5rem;
+}
+
+input:focus-visible,
+select:focus-visible,
+.action:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.action:hover {
+  background: #24402f;
+}
+
+.action.secondary {
+  color: var(--ink);
+  background: transparent;
+}
+
+.action.secondary:hover {
+  background: var(--band);
+}
+
+/* --- messages ------------------------------------------------------------ */
+
+.notice {
+  font-size: 0.9375rem;
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 1.75rem;
+  border-left: 3px solid var(--ink);
+  background: var(--band);
+}
+
+.notice-error {
+  color: var(--debit);
+  border-left-color: var(--debit);
+  background: #fbeceb;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.hint {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 0.7rem 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

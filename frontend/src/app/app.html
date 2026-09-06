@@ -1,35 +1,145 @@
-<main>
+<header class="masthead">
   <h1>Mini Transaction Ledger</h1>
-  <p class="status">Backend: {{ backendStatus() }}</p>
+  <p class="api-state" [class.api-down]="backendStatus() !== 'UP'">
+    @if (backendStatus() === 'UP') {
+      Connected to the ledger service
+    } @else {
+      Ledger service {{ backendStatus() }}
+    }
+  </p>
+</header>
 
-  <h2>Accounts</h2>
+@if (notice()) {
+  <p class="notice" [class.notice-error]="noticeIsError()">{{ notice() }}</p>
+}
 
-  @if (loading()) {
-    <p class="muted">Loading accounts...</p>
-  } @else if (loadFailed()) {
-    <p class="error">Could not load accounts. Is the backend running?</p>
-  } @else if (accounts().length === 0) {
-    <p class="muted">No accounts yet.</p>
-  } @else {
-    <table>
-      <thead>
-        <tr>
-          <th>Id</th>
-          <th>Account number</th>
-          <th>Owner</th>
-          <th class="num">Balance</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (account of accounts(); track account.id) {
+<div class="columns">
+  <!-- ---------------------------------------------------------------- accounts -->
+  <section>
+    <h2>Accounts</h2>
+
+    @if (loading()) {
+      <p class="muted">Reading accounts.</p>
+    } @else if (accounts().length === 0) {
+      <p class="muted">No accounts yet. Open the first one below.</p>
+    } @else {
+      <table class="ledger">
+        <thead>
           <tr>
-            <td>{{ account.id }}</td>
-            <td>{{ account.accountNumber }}</td>
-            <td>{{ account.ownerName }}</td>
-            <td class="num">{{ account.balance | number: '1.2-2' }} {{ account.currency }}</td>
+            <th>Account</th>
+            <th>Owner</th>
+            <th class="num">Balance</th>
           </tr>
+        </thead>
+        <tbody>
+          @for (account of accounts(); track account.id) {
+            <tr
+              [class.row-open]="account.id === selected()?.id"
+              (click)="select(account)"
+              (keydown.enter)="select(account)"
+              tabindex="0"
+            >
+              <td>{{ account.accountNumber }}</td>
+              <td>{{ account.ownerName }}</td>
+              <td class="num figure">
+                {{ account.balance | number: '1.2-2' }}
+                <span class="ccy">{{ account.currency }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <div class="form-block">
+      <h2>Open an account</h2>
+      <div class="fields">
+        <input #accountNumber placeholder="Account number" maxlength="20" aria-label="Account number" />
+        <input #ownerName placeholder="Owner name" maxlength="120" aria-label="Owner name" />
+        <input #currency value="BDT" maxlength="3" class="short" aria-label="Currency" />
+      </div>
+      <button class="action" (click)="openAccount(accountNumber, ownerName, currency)">Open account</button>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------------- posting -->
+  <section>
+    @if (selected(); as account) {
+      <p class="account-owner">{{ account.ownerName }}</p>
+      <p class="account-number">Account {{ account.accountNumber }}</p>
+      <p class="balance figure">
+        {{ account.balance | number: '1.2-2' }}<span class="ccy">{{ account.currency }}</span>
+      </p>
+
+      <div class="form-block">
+        <h2>Post an entry</h2>
+        <div class="fields">
+          <input #amount type="number" min="0.01" step="0.01" placeholder="Amount" aria-label="Amount" />
+          <input #description placeholder="What is it for?" maxlength="255" aria-label="Description" />
+        </div>
+        <div class="actions">
+          <button class="action" (click)="deposit(amount, description)">Deposit</button>
+          <button class="action secondary" (click)="withdraw(amount, description)">Withdraw</button>
+        </div>
+      </div>
+
+      @if (otherAccounts().length > 0) {
+        <div class="form-block">
+          <h2>Transfer to another account</h2>
+          <div class="fields">
+            <select #target aria-label="Destination account">
+              @for (other of otherAccounts(); track other.id) {
+                <option [value]="other.id">{{ other.accountNumber }} — {{ other.ownerName }}</option>
+              }
+            </select>
+            <input #transferAmount type="number" min="0.01" step="0.01" placeholder="Amount" aria-label="Transfer amount" />
+            <input #transferNote placeholder="What is it for?" maxlength="255" aria-label="Transfer description" />
+          </div>
+          <button class="action" (click)="transfer(target, transferAmount, transferNote)">Send transfer</button>
+        </div>
+      }
+
+      <div class="form-block">
+        <h2>Statement</h2>
+        @if (entries().length === 0) {
+          <p class="muted">Nothing posted to this account yet.</p>
+        } @else {
+          <table class="ledger statement">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Particulars</th>
+                <th class="num">Debit</th>
+                <th class="num">Credit</th>
+                <th class="num">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entries(); track entry.entryId) {
+                <tr>
+                  <td class="when">{{ entry.createdAt | date: 'd MMM, HH:mm' }}</td>
+                  <td>{{ entry.description || 'No description' }}</td>
+                  <td class="num figure debit">
+                    @if (entry.direction === 'DEBIT') {
+                      {{ entry.amount | number: '1.2-2' }}
+                    }
+                  </td>
+                  <td class="num figure">
+                    @if (entry.direction === 'CREDIT') {
+                      {{ entry.amount | number: '1.2-2' }}
+                    }
+                  </td>
+                  <td class="num figure carried">{{ entry.balanceAfter | number: '1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p class="hint">Every balance is written by the server as the entry is posted, never added up here.</p>
         }
-      </tbody>
-    </table>
-  }
-</main>
+      </div>
+    } @else {
+      <h2>No account selected</h2>
+      <p class="muted">Pick an account to post entries against it and read its statement.</p>
+    }
+  </section>
+</div>

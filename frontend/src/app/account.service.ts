@@ -26,4 +26,8 @@ export class AccountService {
   listAccounts(): Observable<Account[]> {
     return this.http.get<Account[]>('/api/accounts');
   }
+
+  openAccount(accountNumber: string, ownerName: string, currency: string): Observable<Account> {
+    return this.http.post<Account>('/api/accounts', { accountNumber, ownerName, currency });
+  }
 }
