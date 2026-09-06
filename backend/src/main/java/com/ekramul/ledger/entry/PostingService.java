@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ekramul.ledger.account.Account;
+import com.ekramul.ledger.account.AccountPair;
 import com.ekramul.ledger.account.AccountService;
 import com.ekramul.ledger.entry.dto.DepositRequest;
 import com.ekramul.ledger.entry.dto.EntryResponse;
+import com.ekramul.ledger.entry.dto.TransferRequest;
 import com.ekramul.ledger.entry.dto.WithdrawalRequest;
 
 /** Records money movements. Every method here is one all-or-nothing unit of work. */
@@ -67,6 +69,34 @@ public class PostingService {
 				transaction, account, Direction.DEBIT, request.amount(), account.getBalance()));
 
 		return EntryResponse.from(entry);
+	}
+
+	/**
+	 * Moves money between two accounts.
+	 *
+	 * <p>One event, two entries: a DEBIT on the source and a CREDIT on the destination. They net
+	 * to zero, which is what makes this double-entry rather than two unrelated movements.
+	 *
+	 * <p>All of it is one transaction. There is no moment where the money has left one account
+	 * and not yet arrived at the other.
+	 *
+	 * @return the debit entry first, then the credit entry
+	 */
+	@Transactional
+	public List<EntryResponse> transfer(TransferRequest request) {
+		LedgerTransaction transaction = transactionRepository.save(new LedgerTransaction(
+				request.reference(), TransactionType.TRANSFER, request.description()));
+
+		AccountPair pair = accountService.moveMoney(
+				request.fromAccountId(), request.toAccountId(), request.amount());
+
+		LedgerEntry debit = entryRepository.save(new LedgerEntry(
+				transaction, pair.from(), Direction.DEBIT, request.amount(), pair.from().getBalance()));
+
+		LedgerEntry credit = entryRepository.save(new LedgerEntry(
+				transaction, pair.to(), Direction.CREDIT, request.amount(), pair.to().getBalance()));
+
+		return List.of(EntryResponse.from(debit), EntryResponse.from(credit));
 	}
 
 	@Transactional(readOnly = true)
