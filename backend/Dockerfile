@@ -8,6 +8,11 @@ WORKDIR /app
 # not every time a Java file is edited.
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
+
+# The wrapper must be executable. Git carries the bit, but a GitHub "Download ZIP"
+# strips it, so the build sets it here rather than trusting how the source arrived.
+RUN chmod +x mvnw
+
 RUN ./mvnw -B dependency:go-offline
 
 # Now the source, then build the runnable jar.
