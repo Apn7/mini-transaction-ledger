@@ -1,8 +1,8 @@
 # Mini Transaction Ledger
 
-A double-entry transaction ledger. Accounts are opened, money is deposited, withdrawn and
-transferred, and every movement is recorded as an immutable ledger entry that carries the balance
-it left behind.
+A transaction ledger. Accounts are opened, money is deposited, withdrawn and transferred, and
+every movement is recorded as an immutable ledger entry that carries the balance it left behind.
+A transfer is balanced: one debit and one matching credit that net to zero.
 
 Submitted for the MISL Fresher Assessment Project (Problem 1 — Mini Transaction Ledger).
 
@@ -27,6 +27,7 @@ Then open **http://localhost:4200**.
 - [Inner workings](#inner-workings)
 - [Tests](#tests)
 - [Docker setup](#docker-setup)
+- [Scope](#scope)
 - [Project layout](#project-layout)
 
 ---
@@ -93,7 +94,8 @@ triggered.
 
 ## What the app does
 
-- **Open an account** — account number, owner, and a currency from a fixed list. Balance starts at
+- **Open an account** — account number, owner, and a three-letter currency code. The dropdown
+  offers a fixed list; the API itself accepts any three capitals. Balance starts at
   zero; money can only arrive through a ledger entry, never by being asserted in a request.
 - **Deposit and withdraw** — one financial event, one ledger entry, balance updated in the same
   database transaction.
@@ -119,12 +121,15 @@ to the same account, and both sides of a transfer must share a currency.
 | `GET` | `/api/accounts/{id}/entries` | the account's statement |
 | `POST` | `/api/transfers` | move money between two accounts |
 
-Every posting request carries a client-generated `reference` (a UUID). It is stored under a unique
-constraint, so a retried request cannot record the same event twice — this is the idempotency key.
+Every posting request carries a client-generated `reference` (a UUID), stored under a unique
+constraint on `transactions`. A retried request therefore cannot record the same event twice.
+
+This is a **duplicate guard, not full idempotent replay.** A retry is rejected with `409`; it does
+not receive the original response.
 
 ### Errors
 
-One shape for the whole API, produced by a single `@RestControllerAdvice`:
+One shape for every error the application raises, produced by a single `@RestControllerAdvice`:
 
 ```json
 {
@@ -146,6 +151,10 @@ One shape for the whole API, produced by a single `@RestControllerAdvice`:
 The advice deliberately has **no** `@ExceptionHandler(Exception.class)`. A catch-all is resolved
 before Spring's own handlers and would turn malformed JSON, an unknown path and a wrong HTTP
 method into `500`s instead of the `400`, `404` and `405` they should be.
+
+The cost of that choice: those framework errors keep Spring Boot's **default** error body, which
+carries no `message` field. Getting both — one shape *and* correct framework statuses — means
+extending `ResponseEntityExceptionHandler` and overriding each framework exception in turn.
 
 ---
 
@@ -223,6 +232,8 @@ browser.
 `LedgerEntry` has no setters and the table is never updated or deleted from. A mistake is corrected
 by posting a reversing entry, so the history always says what actually happened. `amount` is always
 positive; a `direction` column of `DEBIT` or `CREDIT` carries the sign.
+
+This is enforced by the application, not by the schema.
 
 ### The balance column is a cache, and it is proved
 
@@ -318,6 +329,20 @@ code edit.
 
 nginx serves `try_files $uri $uri/ /index.html`, so refreshing on any path returns the app instead
 of a 404.
+
+---
+
+## Scope
+
+Deliberately out of scope for this assessment, each a decision rather than an oversight:
+
+- **Authentication and authorization** — the brief places JWT under Problem 2. Production would
+  need an owner on each account, an ownership check on the debit side of a transfer, and an actor
+  recorded on every transaction.
+- **Full double-entry** — a transfer is balanced, but a deposit has a single leg. A general ledger
+  gives it a settlement counterparty, which makes *every entry, signed by direction, sums to zero*
+  a testable invariant.
+- **Pagination, lock timeouts, a currency reference table, and CI.**
 
 ---
 

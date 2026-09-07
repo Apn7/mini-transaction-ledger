@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Proves the backend is alive and reachable.
  *
- * <p>Used by the frontend and by Docker Compose to confirm the service is up before
- * anything depends on it.
+ * <p>Called once by the frontend on load, to show whether the API is reachable.
+ *
+ * <p>It reports that this process is answering HTTP, nothing more — it does not check the
+ * database. Docker Compose gates the backend on the database's own {@code pg_isready}
+ * healthcheck instead. A dependency-aware check is what Spring Boot Actuator provides.
  */
 @RestController
 @RequestMapping("/api")
