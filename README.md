@@ -287,7 +287,8 @@ plain LAN address rather than localhost.
 ## Tests
 
 ```bash
-cd backend  && ./mvnw test   # needs PostgreSQL on localhost:5433
+docker compose up -d db      # the tests need a real database; this starts the one on localhost:5433
+cd backend  && ./mvnw test
 cd frontend && npm test
 ```
 
