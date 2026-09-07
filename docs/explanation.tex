@@ -231,7 +231,8 @@ A single \texttt{@RestControllerAdvice} translating exceptions into HTTP respons
 method ever needs a try-catch. \\
 \addlinespace
 \texttt{ApiError} &
-One error shape for the whole API, so a client never has to guess what a failure looks like. \\
+One error shape for every error the application raises, so a client never has to guess what a
+failure looks like. \\
 \addlinespace
 Flyway migrations &
 \texttt{V1} creates \texttt{accounts}; \texttt{V2} creates \texttt{transactions} and
@@ -241,9 +242,9 @@ Flyway migrations &
 \caption{The components that carry the design.}
 \end{table}
 
-On the frontend there is one page and therefore one component. Two services,
-\texttt{AccountService} and \texttt{PostingService}, own every HTTP call; the component holds the
-screen state in Angular signals and exposes one method per endpoint. There is no router, no state
+On the frontend there is one page and therefore one component. Three services ---
+\texttt{AccountService}, \texttt{PostingService} and \texttt{HealthService} --- own every HTTP
+call; the component holds the screen state in Angular signals and exposes one method per endpoint. There is no router, no state
 management library and no component library --- for a single screen each of those would be
 ceremony rather than structure.
 

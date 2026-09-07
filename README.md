@@ -116,6 +116,7 @@ to the same account, and both sides of a transfer must share a currency.
 | `GET` | `/api/health` | liveness |
 | `POST` | `/api/accounts` | open an account → `201` + `Location` |
 | `GET` | `/api/accounts` | list accounts with balances |
+| `GET` | `/api/accounts/{id}` | one account — the target of the `Location` header above |
 | `POST` | `/api/accounts/{id}/deposits` | credit the account |
 | `POST` | `/api/accounts/{id}/withdrawals` | debit the account |
 | `GET` | `/api/accounts/{id}/entries` | the account's statement |
@@ -273,7 +274,8 @@ repeatable migration in `backend/src/main/resources/db/migration`.
 
 ### Frontend
 
-One page, one component, no router — the app has a single screen. Two services own the HTTP calls;
+One page, one component, no router — the app has a single screen. Three services own the HTTP calls
+(`AccountService`, `PostingService`, `HealthService`);
 the component holds signals for the state and one method per endpoint. Forms use template reference
 variables rather than a forms module, because the server owns validation and the screen simply
 shows what the server said.
@@ -298,6 +300,7 @@ cd frontend && npm test
 | `ConcurrentWithdrawalTest` | ten threads withdraw the same balance at once; exactly one wins, and the nine rolled-back attempts leave no `transactions` rows |
 | `ConcurrentTransferTest` | ten transfers in both directions at once; none deadlock and the money is conserved |
 | `BalanceReconciliationTest` | replaying an account's entries reproduces its stored balance |
+| `app.spec.ts` | the component renders and the page carries its heading |
 | `posting.service.spec.ts` | the UUID fallback produces valid v4 references outside a secure context |
 
 The two concurrency tests were each run once with their safeguard removed, to confirm they can
