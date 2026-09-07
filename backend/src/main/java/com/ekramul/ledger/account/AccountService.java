@@ -128,4 +128,27 @@ public class AccountService {
 				.map(AccountResponse::from)
 				.toList();
 	}
+
+	/**
+	 * Reads one account. No lock is taken — nothing on this path is going to change it.
+	 */
+	@Transactional(readOnly = true)
+	public AccountResponse getAccount(Long accountId) {
+		return accountRepository.findById(accountId)
+				.map(AccountResponse::from)
+				.orElseThrow(() -> new AccountNotFoundException(accountId));
+	}
+
+	/**
+	 * Throws if the account does not exist, and says nothing otherwise.
+	 *
+	 * <p>For read paths that need the 404 but not the row. Deliberately not {@code lockForUpdate}:
+	 * taking a write lock just to answer a read would make readers block writers.
+	 */
+	@Transactional(readOnly = true)
+	public void requireExists(Long accountId) {
+		if (!accountRepository.existsById(accountId)) {
+			throw new AccountNotFoundException(accountId);
+		}
+	}
 }

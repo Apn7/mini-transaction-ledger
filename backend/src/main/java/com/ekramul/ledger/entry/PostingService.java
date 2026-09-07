@@ -99,8 +99,16 @@ public class PostingService {
 		return List.of(EntryResponse.from(debit), EntryResponse.from(credit));
 	}
 
+	/**
+	 * Every entry for one account, oldest first.
+	 *
+	 * <p>The existence check is what separates "this account has posted nothing" (an empty list)
+	 * from "there is no such account" (404). Without it the client cannot tell them apart.
+	 */
 	@Transactional(readOnly = true)
 	public List<EntryResponse> statementFor(Long accountId) {
+		accountService.requireExists(accountId);
+
 		return entryRepository.findByAccountIdOrderByIdAsc(accountId)
 				.stream()
 				.map(EntryResponse::from)
