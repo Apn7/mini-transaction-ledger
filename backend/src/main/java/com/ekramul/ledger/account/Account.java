@@ -65,8 +65,11 @@ public class Account {
 	 *
 	 * <p>The balance is only ever changed through methods like this one, so the rules live with
 	 * the data rather than being repeated by every caller.
+	 *
+	 * <p>Package-private on purpose: only {@link AccountService} can call it, and it always locks
+	 * the row first. Other packages hold an {@code Account} but cannot move its balance.
 	 */
-	public void credit(BigDecimal amount) {
+	void credit(BigDecimal amount) {
 		requirePositive(amount);
 		this.balance = this.balance.add(amount);
 	}
@@ -80,7 +83,7 @@ public class Account {
 	 * <p>Uses {@code compareTo} rather than {@code equals}: two BigDecimals with the same value
 	 * but different scale — 10.5 and 10.5000 — are not {@code equals}, but do compare as equal.
 	 */
-	public void debit(BigDecimal amount) {
+	void debit(BigDecimal amount) {
 		requirePositive(amount);
 
 		if (this.balance.compareTo(amount) < 0) {
